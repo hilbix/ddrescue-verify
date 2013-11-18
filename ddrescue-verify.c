@@ -13,6 +13,8 @@
 #include "ddrescue-verify_version.h"
 
 static int			unbuffered;
+static int			ignore;
+static int			direct;
 
 static tino_md5_ctx		ctx;
 
@@ -23,38 +25,55 @@ static unsigned long long	maxpart;
 static unsigned long long	mincount;
 
 static int
-md5at(FILE *fd, const char *name, unsigned long long from, unsigned long long cnt, char *sum)
+md5part(int fd, const char *name, unsigned long long from, unsigned long long cnt, char *sum)
 {
   static void		*block;
   int			got;
   unsigned long long	pos;
 
   if (!block)
-    block	= tino_allocO(blocksize);
+    block	= tino_alloc_alignedO(blocksize);
   tino_md5_init(&ctx);
 
+  if (tino_file_lseekE(fd, (tino_file_size_t)from, SEEK_SET)!=from)
+    {
+      tino_err("%s at %llu(%llu): seek error", name, from, cnt);
+      return 1;
+    }
+  for (pos=0; pos<cnt; pos+=got)
+    if ((got=tino_file_readE(fd, block, (size_t)((cnt-pos)>blocksize ? blocksize : (size_t)(cnt-pos))))<0)
+      {
+        tino_err("%s at %llu(%llu): read error at %llu", name, from, cnt, pos);
+	return 1;
+      }
+    else if (got==0)
+      {
+        tino_err("%s at %llu(%llu): unexpected EOF at %llu", name, from, cnt, pos);
+	return 1;
+      }
+    else
+      tino_md5_update(&ctx, block, got);
 
-  if (tino_file_fseekE(fd, (tino_file_size_t)from, SEEK_SET))
-    {
-      tino_err("seek error to %llu: %s", from, name);
-      return 1;
-    }
-  for (pos=0; pos<cnt && (got=fread(block, (size_t)1, (size_t)((cnt-pos)>blocksize ? blocksize : (size_t)(cnt-pos)), fd))>0; pos+=got)
-    tino_md5_update(&ctx, block, got);
-  if (pos != cnt)
-    {
-      tino_err("block at %llu: length mismatch: wanted=%llu got=%llu: %s", from, cnt, pos, name);
-      return 1;
-    }
   tino_md5_hex(&ctx, (unsigned char *)sum);
   return 0;
 }
 
+static int
+md5at(int fd, const char *name, unsigned long long from, unsigned long long cnt, char *sum)
+{
+  int ret;
+
+  ret = md5part(fd, name, from, cnt, sum);
+  fputc(ret ? 'x' : '.', stderr);
+  fflush(stderr);
+  return ret;
+}
+
+
 static void
 ddrescue_verify(const char *img, const char *list)
 {
-  FILE		*bin;
-  int		txt;
+  int		bin, txt;
   TINO_BUF	buf;
   const char	*line;
 
@@ -62,12 +81,12 @@ ddrescue_verify(const char *img, const char *list)
   txt	= 0;
   if (strcmp(list, "-") && (txt=tino_file_open_readE(list))<0)
     {
-      tino_err("cannot read text: %s", list);
+      tino_err("cannot open text: %s", list);
       return;
     }
-  if ((bin=fopen(img, "rb"))==NULL)
+  if ((bin=tino_file_openE(img, O_RDONLY|(direct?O_DIRECT:0)))<0)
     {
-      tino_err("cannot read binary: %s", img);
+      tino_err("cannot open binary: %s", img);
       return;
     }
 
@@ -103,31 +122,20 @@ ddrescue_verify(const char *img, const char *list)
 	    }
 	}
       else if (md5at(bin, img, from, count, chksum))
-	return;
+	{
+	  if (!ignore)
+	    return;
+	}
       else if (strcmp(cmp, chksum))
 	{
-	  tino_err("block at %llu: md5sum mismatch: wanted=%s got=%s", from, cmp, chksum);
+	  tino_err("%s at %llu(%llu): md5sum mismatch: wanted=%s got=%s", img, from, count, cmp, chksum);
 	  fprintf(out, "0x%llx 0x%llx %c %s\n", from, count, state, chksum);
-	}
-      else
-	{
-	  fprintf(stderr, ".");
-	  fflush(stderr);
 	}
       if (unbuffered)
         fflush(out);
     }
-  if (ferror(bin))
-    {
-      tino_err("read error: %s", img);
-      fclose(bin);
-      return;
-    }
-  if (fclose(bin))
-    {
-      tino_err("cannot close: %s", img);
-      return;
-    }
+  if (tino_file_closeE(bin))
+    tino_err("%s: cannot close", img);
 }
 
 static void
@@ -150,16 +158,24 @@ main(int argc, char **argv)
 		      ,
 
 		      TINO_GETOPT_USAGE
-		      "h	this help"
+		      "h	this Help"
 		      ,
 		      TINO_GETOPT_ULONGINT
 		      TINO_GETOPT_SUFFIX
 		      TINO_GETOPT_DEFAULT
 		      TINO_GETOPT_MIN
-		      "b size	Blocksize for operation"
+		      "b size	Blocksize for IO"
 		      , &blocksize,
 		      (unsigned long)(BUFSIZ*10),
 		      (unsigned long)(BUFSIZ),
+
+		      TINO_GETOPT_FLAG
+		      "d	Direct IO"
+		      , &direct,
+
+		      TINO_GETOPT_FLAG
+		      "i	Ignore common errors"
+		      , &ignore,
 
 		      TINO_GETOPT_ULLONG
 		      TINO_GETOPT_SUFFIX
@@ -167,7 +183,7 @@ main(int argc, char **argv)
 		      TINO_GETOPT_MIN
 		      "m size	Max size of block for md5 (use 0 for unlimited)"
 		      , &maxpart,
-		      0x10000000ull,
+		      0x100000ull,
 		      0ull,
 
 		      TINO_GETOPT_ULLONG
