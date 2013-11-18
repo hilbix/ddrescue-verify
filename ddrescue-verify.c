@@ -6,7 +6,6 @@
 
 #define TINO_NEED_OLD_ERR_FN
 
-#include "tino/fileerr.h"
 #include "tino/buf_line.h"
 #include "tino/getopt.h"
 #include "tino/md5.h"
@@ -21,15 +20,6 @@ static int		errs;
 static FILE		*out;
 static unsigned		blocksize;
 
-#if 0
-  tino_md5_init(&ctx);
-  while ((got=fread(block, (size_t)1, (size_t)blk, fd))>0)
-    {
-      tino_md5_update(&ctx, block, got);
-      len += got;
-    }
-#endif
-
 static int
 md5at(FILE *fd, const char *name, unsigned long long from, unsigned long long cnt, char *sum)
 {
@@ -42,12 +32,12 @@ md5at(FILE *fd, const char *name, unsigned long long from, unsigned long long cn
   tino_md5_init(&ctx);
 
 
-  if (tino_file_fseekE(fd, (tino_file_size_t)from, SEEK_SET)!=from)
+  if (tino_file_fseekE(fd, (tino_file_size_t)from, SEEK_SET))
     {
-      tino_err("seek error %llu: %s", from, name);
+      tino_err("seek error to %llu: %s", from, name);
       return 1;
     }
-  for (pos=0; pos<cnt && (got=fread(block, (size_t)1, (size_t)(cnt>blocksize ? blocksize : cnt), fd))>0; pos+=got)
+  for (pos=0; pos<cnt && (got=fread(block, (size_t)1, (size_t)((cnt-pos)>blocksize ? blocksize : (size_t)(cnt-pos)), fd))>0; pos+=got)
     tino_md5_update(&ctx, block, got);
   if (pos != cnt)
     {

@@ -1,11 +1,11 @@
 # Makefile automatically generated, do not edit!
 # This output (only this Makefile) is Public Domain.
 #
-#@MD5TINOIGN@ Creation date: Mon Nov 18 00:49:28 CET 2013
+#@MD5TINOIGN@ Creation date: Mon Nov 18 01:38:59 CET 2013
 #
 # This file is based on following files:
 #@MD5TINOIGN@ 1: Makefile.tino
-#@MD5TINOIGN@ 2: /git/git/ddrescue-verify.GITHUB/tino/Makefile.proto
+#@MD5TINOIGN@ 2: /home/tino/git/ddrescue-verify/tino/Makefile.proto
 
 #
 #@MD5TINOIGN@ included: Makefile.tino
@@ -32,8 +32,10 @@ ADD_LDFLAGS=
   DISTCLEAN=
    TINOCOPY=
 
+INSTALLPATH=/usr/local
+
 #
-#@MD5TINOIGN@ included: /git/git/ddrescue-verify.GITHUB/tino/Makefile.proto
+#@MD5TINOIGN@ included: /home/tino/git/ddrescue-verify/tino/Makefile.proto
 #
 
 # Automatically generated from "PROGS" above
@@ -44,7 +46,6 @@ ADD_LDFLAGS=
  STD_CCFLAGS=-g -Wall -Wno-unused-function -O3
 STD_LDFLAGS=
  STD_LDLIBS=
-INSTALLPATH=$(HOME)
     BINPATH=bin
    SBINPATH=sbin
     LIBPATH=lib
@@ -168,10 +169,9 @@ $(PROG1):	$(PROG1).o $(OBJS) $(LIBS)
 # compiler generated dependencies, remove if incorrect
 
 # included: ddrescue-verify.d
-$(PROG1).o:  ddrescue-verify.c tino/fileerr.h tino/file.h \
- tino/sysfix.h tino/sysfix_cygwin.h tino/type.h tino/ex.h tino/arg.h \
- tino/buf_line.h tino/buf.h tino/alloc.h tino/err.h tino/fatal.h \
- tino/debug.h tino/codec.h tino/getopt.h tino/md5.h \
- ddrescue-verify_version.h
+$(PROG1).o:  ddrescue-verify.c tino/buf_line.h tino/buf.h \
+ tino/file.h tino/sysfix.h tino/sysfix_cygwin.h tino/type.h tino/alloc.h \
+ tino/err.h tino/fatal.h tino/ex.h tino/arg.h tino/debug.h tino/codec.h \
+ tino/getopt.h tino/md5.h ddrescue-verify_version.h
 
 # end
