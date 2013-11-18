@@ -1,0 +1,12 @@
+A quick an dirty verifyer for gddrescue images
+# This comment must be followed by a blank line!
+
+After doing some rescue with ddrescue, you want to verify your image.  However there is no compare option.
+
+This adds a compare for ddrescue using the written log file using cryptographic checksums (md5).  Apply this as follows:
+
+- To create the MD5, run it with the image and the log file and write the output to a file
+- To verify the MD5, run it with the image and the previous output
+
+Easy and convenient.  There are some options to control skipping small parts, like in damaged parts of the drive, or use a different blocksize on read.
+

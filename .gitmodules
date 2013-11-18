@@ -1,0 +1,3 @@
+[submodule "tino"]
+	path = tino
+	url = git-hilbix-tinolib:hilbix/tinolib.git
