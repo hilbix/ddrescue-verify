@@ -68,9 +68,9 @@ md5part(CONF, unsigned long long from, unsigned long long count)
       unsigned long long	max;
 
       max	= count - pos;
-      if (max > C->blocksize)
+      if (C->blocksize && max > C->blocksize)
 	max	= C->blocksize;
-      if ((got=tino_file_readE(C->fd, C->block, max))<0)
+      if ((got=tino_file_readE(C->fd, C->block, (size_t)max))<0)
         return 1+err(C, "read error at %llu", pos);
       if (got==0)
         return 1+err(C, "unexpected EOF at %llu", pos);
@@ -128,9 +128,9 @@ addstate(CONF, char state, unsigned long long from, unsigned long long count, co
 static int
 ddrescue_verify(CONF)
 {
-  int			txt;
-  TINO_BUF		buf;
-  const char		*line;
+  int		txt;
+  TINO_BUF	buf;
+  const char	*line;
 
   if ((C->fd=tino_file_openE(C->name, O_RDONLY|(C->direct?O_DIRECT:0)))<0)
     {
