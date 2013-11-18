@@ -110,7 +110,10 @@ ddrescue_verify(const char *img, const char *list)
 	  fprintf(out, "0x%llx 0x%llx %c %s\n", from, count, state, chksum);
 	}
       else
-	fprintf(out, ".");
+	{
+	  fprintf(stderr, ".");
+	  fflush(stderr);
+	}
       if (unbuffered)
         fflush(out);
     }
