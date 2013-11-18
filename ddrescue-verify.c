@@ -12,13 +12,15 @@
 
 #include "ddrescue-verify_version.h"
 
-static int		unbuffered;
+static int			unbuffered;
 
-static tino_md5_ctx	ctx;
+static tino_md5_ctx		ctx;
 
-static int		errs;
-static FILE		*out;
-static unsigned		blocksize;
+static int			errs;
+static FILE			*out;
+static unsigned long		blocksize;
+static unsigned long long	maxpart;
+static unsigned long long	mincount;
 
 static int
 md5at(FILE *fd, const char *name, unsigned long long from, unsigned long long cnt, char *sum)
@@ -84,16 +86,33 @@ ddrescue_verify(const char *img, const char *list)
       cmp[0]	= 0;
       count	= 0;
       n	= sscanf(line, "0x%llx 0x%llx %c %60s", &from, &count, &state, cmp);
-      if (n<3 || state!='+')
+      if (n<3 || state!='+' || count<mincount)
 	continue;
-      if (md5at(bin, img, from, count, chksum))
-	break;
       if (!*cmp)
-	fprintf(out, "0x%llx 0x%llx %c %s\n", from, count, state, chksum);
+	{
+	  unsigned long long	part, len;
+
+	  for (part=0; part<count; part+=len)
+	    {
+	      len = (maxpart && count-part>maxpart) ? maxpart : count-part;
+              if (md5at(bin, img, from+part, len, chksum))
+	        return;
+	      fprintf(out, "0x%llx 0x%llx %c %s\n", from+part, len, state, chksum);
+	      if (unbuffered)
+		fflush(out);
+	    }
+	}
+      else if (md5at(bin, img, from, count, chksum))
+	return;
       else if (strcmp(cmp, chksum))
-	tino_err("block at %llu: md5sum mismatch: wanted=%s got=%s", from, cmp, chksum);
+	{
+	  tino_err("block at %llu: md5sum mismatch: wanted=%s got=%s", from, cmp, chksum);
+	  fprintf(out, "0x%llx 0x%llx %c %s\n", from, count, state, chksum);
+	}
+      else
+	fprintf(out, ".");
       if (unbuffered)
-	fflush(out);
+        fflush(out);
     }
   if (ferror(bin))
     {
@@ -120,90 +139,47 @@ main(int argc, char **argv)
 {
   int		argn;
 
-  unbuffered		= 1;
   out			= stdout;
-  blocksize		= BUFSIZ*10;
   tino_verror_fn	= verror_fn;
   argn	= tino_getopt(argc, argv, 2, 2,
 		      TINO_GETOPT_VERSION(DDRESCUE_VERIFY_VERSION)
-		      " drive.img drive.log\n"
-		      "\t"
+		      " drive.img drive.log"
 		      ,
 
 		      TINO_GETOPT_USAGE
 		      "h	this help"
 		      ,
-#if 0
-		      TINO_GETOPT_UNSIGNED
-		      TINO_GETOPT_DEFAULT
+		      TINO_GETOPT_ULONGINT
 		      TINO_GETOPT_SUFFIX
+		      TINO_GETOPT_DEFAULT
+		      TINO_GETOPT_MIN
 		      "b size	Blocksize for operation"
 		      , &blocksize,
-		      (unsigned)(BUFSIZ*10),
-
-		      TINO_GETOPT_FLAG
-		      "c	Cat mode, echo input to stdout again\n"
-		      "		sends MD5 sum to stderr, use -u to use 2>&1"
-		      , &cat,
-
-		      TINO_GETOPT_FLAG
-		      "d	Do md5sum of commandline args or lines from stdin"
-		      , &direct,
-
-		      TINO_GETOPT_FLAG
-		      "i	Ignore errors silently"
-		      , &ignore,
-
-		      TINO_GETOPT_FLAG
-		      "k	prefix MD5 with blocKnumbers.  Implies -m\n"
-		      "		This way equal blocks give different hashes."
-		      , &blocknumber,
-
-		      TINO_GETOPT_FLAG
-		      "l	overLapping mode for -m (-m defaults to 1 MiB)\n"
-		      "		Outputs 1-12-23-34+4=1234 (triple effort).\n"
-		      "		The partial HASHes overlap by 1 block of size -m"
-		      , &overlap,
+		      (unsigned long)(BUFSIZ*10),
+		      (unsigned long)(BUFSIZ),
 
 		      TINO_GETOPT_ULLONG
 		      TINO_GETOPT_SUFFIX
-		      "m size	Max size of block for md5 (default: unlimited)\n"
-		      "		One MD5 sum each size bytes (and one for all).\n"
-		      "		Outputs 1+2+3+4=1234. (double effort)"
-		      , &maxsize,
+		      TINO_GETOPT_DEFAULT
+		      TINO_GETOPT_MIN
+		      "m size	Max size of block for md5 (use 0 for unlimited)"
+		      , &maxpart,
+		      0x10000000ull,
+		      0ull,
 
-		      TINO_GETOPT_FLAG
-		      "n	read NUL terminated lines\n"
-		      "		Note that NUL always acts as line terminator."
-		      , &nflag,
-
-		      TINO_GETOPT_STRING
-		      "p str	Preset md5 algorithm with given string\n"
-		      "		This modifies the md5 algorithm by prefixing str."
-		      , &prefix,
-
-		      TINO_GETOPT_FLAG
-		      "q	Quiet mode: do not print (shell escaped) file names"
-		      , &quiet,
-
-		      TINO_GETOPT_FLAG
-		      "s	read data from Stdin instead, not a file list\n"
-		      "		Enables '-' as file argument for stdin, too."
-		      , &stdinflag,
-
-		      TINO_GETOPT_CHAR
-		      "t	line Termination character, default whitespace\n"
-		      "		Note: -t defaults to NUL if -n present."
-		      , &tchar,
+		      TINO_GETOPT_ULLONG
+		      TINO_GETOPT_SUFFIX
+		      TINO_GETOPT_DEFAULT
+		      TINO_GETOPT_MIN
+		      "s size	Skip blocks of less size (use 0 to disable)"
+		      , &mincount,
+		      0x10000ull,
+		      0ull,
 
 		      TINO_GETOPT_FLAG
 		      "u	Unbuffered output"
 		      , &unbuffered,
 
-		      TINO_GETOPT_FLAG
-		      "z	Write NUL(\"zero\") terminated lines, disables shell escape"
-		      , &zero,
-#endif
 		      NULL);
 
   if (argn<=0)
