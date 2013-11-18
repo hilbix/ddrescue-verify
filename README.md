@@ -37,6 +37,8 @@ For options, see
 ddrescue-verify -h
 ```
 
+To correct the verification errors, you can use the output as logfile for ddrescue again.
+
 
 Note about MD5:
 ---------------

@@ -16,7 +16,7 @@ static int	errs;
 
 struct _config
   {
-    int			unbuffered, ignore, direct;
+    int			unbuffered, ignore, direct, relaxed, quiet;
     unsigned long	blocksize;
     unsigned long long	maxpart;
     unsigned long long	mincount;
@@ -29,8 +29,8 @@ struct _config
     unsigned long long	from, cnt;
 
     void		*block;
-    unsigned long long	pos;
-    char		state;
+    unsigned long long	currentpos, currentlen;
+    char		laststate;
 
     char		digest[33];
   };
@@ -86,26 +86,43 @@ md5at(CONF, unsigned long long pos, unsigned long long count)
   int ret;
 
   ret = md5part(C, pos, count);
-  fputc(ret ? 'x' : '.', stderr);
-  fflush(stderr);
+  if (!C->quiet)
+    {
+      fputc(ret ? 'x' : '.', stderr);
+      fflush(stderr);
+    }
   return ret;
 }
 
-static void
+static int
 addstate(CONF, char state, unsigned long long from, unsigned long long count, const char *chksum, const char *comment)
 {
-  if (!state)
-    return;
+  if (C->relaxed && C->currentpos<from)
+    addstate(C, '+', C->currentpos, from-C->currentpos, NULL, NULL);
+  if (C->currentpos != from)
+    return err(C, "state sequence %llu(%llu) broken (logfile corrupt?)", from, count);
 
+  if (C->currentlen && (chksum || C->laststate!=state))
+    {
+      fprintf(C->out, "0x%llx 0x%llx %c\n", C->currentpos-C->currentlen, C->currentlen, C->laststate);
+      C->currentlen = 0;
+    }
+  C->currentpos	+= count;
+  C->currentlen	+= count;
   if (chksum)
-    fprintf(C->out, "0x%llx 0x%llx %c %s\n", from, count, state, chksum);
-  else
-    fprintf(C->out, "0x%llx 0x%llx %c\n", from, count, state);
+    {
+      /* C->currentlen	== count	*/
+      fprintf(C->out, "0x%llx 0x%llx %c %s\n", from, count, state, chksum);
+      C->currentlen	= 0;
+    }
   if (comment)
-    fprintf(C->out, "0x%llx 0x%llx %c %s\n", from, count, state, comment);
+    fprintf(C->out, "# 0x%llx 0x%llx %c %s\n", from, count, state, comment);
 
+  C->laststate = state;
   if (C->unbuffered)
     fflush(C->out);
+
+  return 0;
 }
 
 static int
@@ -132,8 +149,9 @@ ddrescue_verify(CONF)
   fprintf(C->out, "# img:  %s\n", C->name);
   fprintf(C->out, "# list: %s\n", C->input);
   fprintf(C->out, "0x0 +\n");
-  C->pos	= 0;
-  C->state	= 0;
+  C->currentpos	= 0;
+  C->currentlen	= 0;
+  C->laststate	= 0;
   while ((line=tino_buf_line_read(&buf, txt, 10))!=0)
     {
       int	n;
@@ -207,7 +225,11 @@ main(int argc, char **argv)
   tino_verror_fn	= verror_fn;
   argn	= tino_getopt(argc, argv, 2, 2,
 		      TINO_GETOPT_VERSION(DDRESCUE_VERIFY_VERSION)
-		      " drive.img drive.log"
+		      " outfile logfile|-\n"
+		      "	1) Create MD5 checksums of ddrescue outfile/logfile to verify that\n"
+		      "	   the readable parts are correct, without transferring outfile again.\n"
+		      "	2) Verify the checksums (given as logfile) and output a new logfile,\n"
+		      "	   such that the errors can be corrected using ddrescue."
 		      ,
 
 		      TINO_GETOPT_USAGE
@@ -238,6 +260,15 @@ main(int argc, char **argv)
 		      , &C->maxpart,
 		      0x100000ull,
 		      0ull,
+
+		      TINO_GETOPT_FLAG
+		      "q	Quiet (no dots)"
+		      , &C->quiet,
+
+		      TINO_GETOPT_FLAG
+		      "r	Relaxed reading of input\n"
+		      "\t	The input log can have holes, which are silently output as '+'"
+		      , &C->ignore,
 
 		      TINO_GETOPT_ULLONG
 		      TINO_GETOPT_SUFFIX
