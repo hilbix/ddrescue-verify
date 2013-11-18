@@ -10,6 +10,7 @@ Usage:
 ```bash
 git clone https://github.com/hilbix/ddrescue-verify.git
 cd ddrescue-verify
+git submodule update --init
 make
 make install
 ```
