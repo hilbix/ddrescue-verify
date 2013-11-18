@@ -56,9 +56,6 @@ md5part(CONF, unsigned long long from, unsigned long long count)
   unsigned long long	pos;
   tino_md5_ctx		ctx;
 
-  if (!C->block)
-    C->block	= tino_alloc_alignedO(C->blocksize);
-
   if (tino_file_lseekE(C->fd, (tino_file_size_t)from, SEEK_SET)!=from)
     return 1+err(C, "seek error");
 
@@ -288,10 +285,14 @@ main(int argc, char **argv)
   if (argn<=0)
     return 1;
 
+  C->block	= tino_alloc_alignedO(C->blocksize);
+
   C->name	= argv[argn];
   C->input	= argv[argn+1];
+
   ddrescue_verify(C);
 
+  tino_freeO(C->block);
   return errs;
 }
 
