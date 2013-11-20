@@ -113,7 +113,7 @@ addstate(CONF, char state, unsigned long long from, unsigned long long count, co
       C->currentlen	= 0;
     }
   if (comment)
-    fprintf(C->out, "# 0x%llx 0x%llx %c %s\n", from, count, state, comment);
+    fprintf(C->out, "# 0x%llx 0x%llx + %s\n", from, count, comment);
 
   C->laststate = state;
   if (C->unbuffered)
