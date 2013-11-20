@@ -65,7 +65,7 @@ progress(void *user, long delta, time_t now, long runtime)
 	, tino_scale_bytes(2, C->lastio, 2, -9)
 	, tino_scale_number(3, C->states, 0, 8)
 	, tino_scale_speed(4, C->lastio, runtime, 1, -8)
-	, tino_scale_slew_avg(5, 6, C->lastio, runtime, 1, -7)
+	, tino_scale_slew_avg(5, 6, C->currentpos, runtime, 1, -7)
 	);
   fflush(C->state);
 
@@ -186,6 +186,10 @@ ddrescue_verify(CONF)
     fprintf(C->out, "# from: 0x%llx\n", C->cont);
   else
     fprintf(C->out, "0x0 +\n");
+  if (C->relaxed)
+    fprintf(C->out, "# relaxed\n");
+  if (C->direct)
+    fprintf(C->out, "# direct\n");
   C->currentpos	= C->cont;
   C->currentlen	= 0;
   C->laststate	= 0;
@@ -311,13 +315,13 @@ main(int argc, char **argv)
 		      0ull,
 
 		      TINO_GETOPT_FLAG
-		      "q	Quiet (no dots)"
+		      "q	Quiet (do not output progress)"
 		      , &C->quiet,
 
 		      TINO_GETOPT_FLAG
 		      "r	Relaxed reading of input\n"
-		      "\t	The input log can have holes, which are silently output as '+'"
-		      , &C->ignore,
+		      "		The input log can have holes, which are silently output as '+'"
+		      , &C->relaxed,
 
 		      TINO_GETOPT_ULLONG
 		      TINO_GETOPT_SUFFIX
