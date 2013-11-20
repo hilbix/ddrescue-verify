@@ -287,7 +287,7 @@ main(int argc, char **argv)
 		      (unsigned long)(BUFSIZ*10),
 		      (unsigned long)(BUFSIZ),
 
-		      TINO_GETOPT_ULONGINT
+		      TINO_GETOPT_ULLONG
 		      TINO_GETOPT_SUFFIX
 		      "c pos	Continue from position (in case of interrupt)\n"
 		      "		You can find the position in the output"
