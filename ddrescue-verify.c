@@ -29,7 +29,7 @@ struct _config
     int			fd;
     const char		*input;
 
-    unsigned long long	from, cnt, lastio, states;
+    unsigned long long	from, cnt, lastio, states, read;
 
     void		*block;
     unsigned long long	currentpos, currentlen;
@@ -64,9 +64,9 @@ progress(void *user, long delta, time_t now, long runtime)
 	, tino_scale_interval(1, runtime, 2, -6)
 	, tino_scale_bytes(2, C->lastio, 2, -9)
 	, tino_scale_number(3, C->states, 0, 8)
-	, tino_scale_speed(4, C->lastio, runtime, 1, -8)
+	, tino_scale_speed(4, C->read, runtime, 1, -8)
 	, C->currentpos
-	, tino_scale_slew_avg(5, 6, C->currentpos, runtime, 1, -7)
+	, tino_scale_slew_avg(5, 6, C->read, runtime, 1, -7)
 	);
   fflush(C->state);
 
@@ -99,6 +99,7 @@ md5part(CONF, unsigned long long from, unsigned long long count)
         return 1+err(C, "unexpected EOF at 0x%llx", pos);
       tino_md5_update(&ctx, C->block, got);
       C->lastio	+= got;
+      C->read	+= got;
     }
   tino_md5_hex(&ctx, (unsigned char *)C->digest);
   return 0;
@@ -350,6 +351,7 @@ main(int argc, char **argv)
   C->states	= 0;
   C->lastio	= 0;
   C->currentpos	= 0;
+  C->read	= 0;
   tino_alarm_set(1, progress, C);
 
   ddrescue_verify(C);
