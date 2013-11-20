@@ -6,8 +6,10 @@
 
 #define TINO_NEED_OLD_ERR_FN
 
+#include "tino/alarm.h"
 #include "tino/buf_line.h"
 #include "tino/getopt.h"
+#include "tino/scale.h"
 #include "tino/md5.h"
 
 #include "ddrescue-verify_version.h"
@@ -21,12 +23,12 @@ struct _config
     unsigned long long	maxpart;
     unsigned long long	mincount;
 
-    FILE		*out;
+    FILE		*out, *state;
     const char		*name;
     int			fd;
     const char		*input;
 
-    unsigned long long	from, cnt;
+    unsigned long long	from, cnt, lastio, states;
 
     void		*block;
     unsigned long long	currentpos, currentlen;
@@ -50,6 +52,26 @@ err(CONF, const char *s, ...)
 }
 
 static int
+progress(void *user, long delta, time_t now, long runtime)
+{
+  CONF = user;
+
+  if (C->quiet)
+    return C->quiet==1 ? 0 : 1;
+
+  fprintf(C->state, "\r%s %siB %s %siB/s, current %siB/s "
+	, tino_scale_interval(1, runtime, 2, -6)
+	, tino_scale_bytes(2, C->lastio, 2, -9)
+	, tino_scale_number(3, C->states, 0, 8)
+	, tino_scale_speed(4, C->lastio, runtime, 1, -8)
+	, tino_scale_slew_avg(5, 6, C->lastio, runtime, 1, -7)
+	);
+  fflush(C->state);
+
+  return 0;
+}
+
+static int
 md5part(CONF, unsigned long long from, unsigned long long count)
 {
   int			got;
@@ -58,6 +80,8 @@ md5part(CONF, unsigned long long from, unsigned long long count)
 
   if (tino_file_lseekE(C->fd, (tino_file_size_t)from, SEEK_SET)!=from)
     return 1+err(C, "seek error");
+
+  C->lastio = from;
 
   tino_md5_init(&ctx);
   for (pos=0; pos<count; pos+=got)
@@ -72,6 +96,7 @@ md5part(CONF, unsigned long long from, unsigned long long count)
       if (got==0)
         return 1+err(C, "unexpected EOF at %llu", pos);
       tino_md5_update(&ctx, C->block, got);
+      C->lastio	+= got;
     }
   tino_md5_hex(&ctx, (unsigned char *)C->digest);
   return 0;
@@ -83,27 +108,36 @@ md5at(CONF, unsigned long long pos, unsigned long long count)
   int ret;
 
   ret = md5part(C, pos, count);
+#if 0
   if (!C->quiet)
     {
-      fputc(ret ? 'x' : '.', stderr);
+      fputc(ret ? 'x' : '.', C->stderr);
       fflush(stderr);
     }
+#endif
   return ret;
 }
 
 static int
 addstate(CONF, char state, unsigned long long from, unsigned long long count, const char *chksum, const char *comment)
 {
+  C->states++;
+
   if (C->relaxed && C->currentpos<from)
     addstate(C, '+', C->currentpos, from-C->currentpos, NULL, NULL);
-  if (C->currentpos != from)
-    return err(C, "state sequence %llu(%llu) broken (logfile corrupt?)", from, count);
 
   if (C->currentlen && (chksum || C->laststate!=state))
     {
       fprintf(C->out, "0x%llx 0x%llx %c\n", C->currentpos-C->currentlen, C->currentlen, C->laststate);
       C->currentlen = 0;
     }
+  C->laststate = state;
+  if (!state)
+    return 0;
+
+  if (C->currentpos != from)
+    return err(C, "state sequence %llu(%llu) broken (logfile corrupt?)", from, count);
+
   C->currentpos	+= count;
   C->currentlen	+= count;
   if (chksum)
@@ -115,7 +149,6 @@ addstate(CONF, char state, unsigned long long from, unsigned long long count, co
   if (comment)
     fprintf(C->out, "# 0x%llx 0x%llx + %s\n", from, count, comment);
 
-  C->laststate = state;
   if (C->unbuffered)
     fflush(C->out);
 
@@ -131,7 +164,10 @@ ddrescue_verify(CONF)
 
   if ((C->fd=tino_file_openE(C->name, O_RDONLY|(C->direct?O_DIRECT:0)))<0)
     {
-      tino_err("cannot open binary: %s", C->name);
+      if (errno==EINVAL && C->direct) 
+        tino_err("cannot open binary (hint: option -d): %s", C->name);
+      else
+        tino_err("cannot open binary: %s", C->name);
       return 1;
     }
   txt	= 0;
@@ -219,6 +255,7 @@ main(int argc, char **argv)
   CONF = &config;
 
   C->out		= stdout;
+  C->state		= stderr;
   tino_verror_fn	= verror_fn;
   argn	= tino_getopt(argc, argv, 2, 2,
 		      TINO_GETOPT_VERSION(DDRESCUE_VERIFY_VERSION)
@@ -289,6 +326,10 @@ main(int argc, char **argv)
 
   C->name	= argv[argn];
   C->input	= argv[argn+1];
+
+  C->states	= 0;
+  C->lastio	= 0;
+  tino_alarm_set(1, progress, C);
 
   ddrescue_verify(C);
 
