@@ -1,3 +1,6 @@
+*This still is in alpha state, is mostly untested and may contain bugs*
+
+
 ddrescue-verify
 ===============
 
