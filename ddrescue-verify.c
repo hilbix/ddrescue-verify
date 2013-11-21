@@ -60,7 +60,7 @@ progress(void *user, long delta, time_t now, long runtime)
   if (C->quiet)
     return C->quiet==1 ? 0 : 1;
 
-  fprintf(C->state, "\r%s %siB %s %siB/s 0x%06llx-0x%06llx %siB/s "
+  fprintf(C->state, "\r%s %siB %s %siB/s 0x%012llx-0x%012llx %siB/s "
 	, tino_scale_interval(1, runtime, 2, -6)
 	, tino_scale_bytes(2, C->lastio, 2, -7)
 	, tino_scale_number(3, C->states, 0, 8)
