@@ -74,7 +74,7 @@ progress(void *user, long delta, time_t now, long runtime)
 }
 
 static int
-md5part(CONF, unsigned long long from, unsigned long long count)
+md5at(CONF, unsigned long long from, unsigned long long count)
 {
   int			got;
   unsigned long long	pos;
@@ -103,22 +103,6 @@ md5part(CONF, unsigned long long from, unsigned long long count)
     }
   tino_md5_hex(&ctx, (unsigned char *)C->digest);
   return 0;
-}
-
-static int
-md5at(CONF, unsigned long long pos, unsigned long long count)
-{
-  int ret;
-
-  ret = md5part(C, pos, count);
-#if 0
-  if (!C->quiet)
-    {
-      fputc(ret ? 'x' : '.', C->stderr);
-      fflush(stderr);
-    }
-#endif
-  return ret;
 }
 
 static int
@@ -260,6 +244,7 @@ verror_fn(const char *pref, TINO_VA_LIST list, int err)
 {
   errs	= 1;
   tino_verror_std(pref, list, err);
+  errno = 0;
 }
 
 int
