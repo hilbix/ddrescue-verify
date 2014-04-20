@@ -52,6 +52,8 @@ For all options, see
 ddrescue-verify -h
 ```
 
+See the [Wiki](https://github.com/hilbix/ddrescue-verify/wiki) for a more elaborate example.
+
 
 Important:
 ----------
