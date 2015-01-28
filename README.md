@@ -32,12 +32,13 @@ ddrescue-verify drive.img drive.log > drive.check
 
 Do the verification:
 ```bash
-ddrescue-verify /dev/drive drive.check > drive.verify
+ddrescue-verify -i /dev/drive drive.check > drive.verify
 ```
+(You should at least use option `-i` in case a drive has developed more errors.  See also option `-d`.)
 
 You can chain this, of course, if you think, you need it:
 ```bash
-ddrescue-verify drive.img drive.log | ssh remote ddrescue-verify /dev/drive - > drive.verify
+ddrescue-verify drive.img drive.log | ssh remote ddrescue-verify -dui /dev/drive - > drive.verify
 ```
 `drive.verify` is not able to keep all information of `drive.log`.  So make sure you do not loose `drive.log`, this is your original and stays the correct source of information!
 
