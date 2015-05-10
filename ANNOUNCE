@@ -1,1 +1,2 @@
-A quick first version, because I needed it
+Announcements are now in the git commit log:
+git log --follow VERSION
