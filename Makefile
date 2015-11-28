@@ -1,7 +1,7 @@
 # Makefile automatically generated, do not edit!
 # This output (only this Makefile) is Public Domain.
 #
-#@MD5TINOIGN@ Creation date: Sun May 10 14:30:39 CEST 2015
+#@MD5TINOIGN@ Creation date: Sat Nov 28 21:16:39 CET 2015
 #
 # This file is based on following files:
 #@MD5TINOIGN@ 1: Makefile.tino
@@ -42,8 +42,8 @@ INSTALLPATH=/usr/local
       PROG1=ddrescue-verify
 
 # Override those in Makefile.tino if needed:
- STD_CFLAGS=-g -Wall -Wno-unused-function -O3
- STD_CCFLAGS=-g -Wall -Wno-unused-function -O3
+ STD_CFLAGS=-g -Wall -Wno-unused-function -O3 -Wno-error=unused-value
+ STD_CCFLAGS=-g -Wall -Wno-unused-function -O3 -Wno-error=unused-value
 STD_LDFLAGS=
  STD_LDLIBS=
     BINPATH=bin
@@ -58,10 +58,10 @@ STD_LDFLAGS=
 # Except for the compiler generated dependencies at the end
 # from here no changes shall be needed.
 
-     CFLAGS=$(DBG_FLAGS) $(DBG_CFLAGS) $(ADD_CFLAGS) $(STD_CFLAGS) -I"$(HERE)"
-   CXXFLAGS=$(DBG_CCFLAGS) $(ADD_CCFLAGS) $(STD_CCFLAGS) -I"$(HERE)"
-    LDFLAGS=$(DBG_LDFLAGS) $(ADD_LDFLAGS) $(STD_LDFLAGS)
-     LDLIBS=$(DBG_LDLIBS) $(ADD_LDLIBS) $(STD_LDLIBS)
+     CFLAGS=$(DBG_FLAGS) $(DBG_CFLAGS) $(STD_CFLAGS) $(ADD_CFLAGS) -I"$(HERE)"
+   CXXFLAGS=$(DBG_CCFLAGS) $(STD_CCFLAGS) $(ADD_CCFLAGS) -I"$(HERE)"
+    LDFLAGS=$(DBG_LDFLAGS) $(STD_LDFLAGS) $(ADD_LDFLAGS)
+     LDLIBS=$(DBG_LDLIBS) $(STD_LDLIBS) $(ADD_LDLIBS)
 
 VERSIONFILE=$(PROG1)_version
 VERSIONNAME=$(VERSIONFILE)
@@ -170,9 +170,10 @@ $(PROG1):	$(PROG1).o $(OBJS) $(LIBS)
 
 # included: ddrescue-verify.d
 $(PROG1).o:  ddrescue-verify.c tino/alarm.h tino/file.h \
- tino/sysfix.h tino/sysfix_cygwin.h tino/sysfix_diet.h tino/type.h \
- tino/fatal.h tino/ex.h tino/arg.h tino/alloc.h tino/err.h tino/debug.h \
- tino/signals.h tino/buf_line.h tino/buf.h tino/codec.h tino/getopt.h \
- tino/scale.h tino/auxbuf.h tino/md5.h ddrescue-verify_version.h
+ tino/sysfix.h tino/sysfix_cygwin.h tino/sysfix_diet.h \
+ tino/sysfix_linux.h tino/sysfix_osx.h tino/type.h tino/fatal.h tino/ex.h \
+ tino/arg.h tino/alloc.h tino/err.h tino/debug.h tino/signals.h \
+ tino/buf_line.h tino/buf.h tino/codec.h tino/getopt.h tino/scale.h \
+ tino/auxbuf.h tino/md5.h ddrescue-verify_version.h
 
 # end
