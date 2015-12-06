@@ -283,11 +283,11 @@ main(int argc, char **argv)
 		      "c pos	Continue from position (in case of interrupt)\n"
 		      "		You can find the position in the output"
 		      , &C->cont,
-
+#ifndef TINO_NO_O_DIRECT
 		      TINO_GETOPT_FLAG
 		      "d	Direct IO"
 		      , &C->direct,
-
+#endif
 		      TINO_GETOPT_FLAG
 		      "i	Ignore common errors"
 		      , &C->ignore,
