@@ -1,11 +1,13 @@
 # if ddrescue changes it's output logfile, ever, this fails.
 
+need ddrescue
+
 run dd if=/dev/urandom bs=10240 count=1024 of=TESTFILE status=noxfer
 RUN 0 1024+0 records in@_1024+0 records out
 run ddrescue -q TESTFILE TEST.img TEST.log
 RUN 0
-run cat TEST.log
-RUN 0 # Rescue Logfile. Created by GNU ddrescue version 1.17@_# Command line: ddrescue -q TESTFILE TEST.img TEST.log@_# current_pos@+ current_status@_0x009F0000 @+ @+ +@_#@+ @+ @+ pos@+ @+ @+ @+ size@+ status@_0x00000000@+ 0x00A00000@+ +
+run sed -e 's/ ddrescue version [^[:space:]]*$//' -e '/^# [^[:space:]]* time: /d' -e '/^# Finished/d' TEST.log
+RUN 0 # Rescue Logfile. Created by GNU@_# Command line: ddrescue -q TESTFILE TEST.img TEST.log@_# current_pos@+ current_status@_0x009F0000 @+ @+ +@_#@+ @+ @+ pos@+ @+ @+ @+ size@+ status@_0x00000000@+ 0x00A00000@+ +
 run cmp -s TESTFILE TEST.img
 RUN 0
 run which ddrescue-verify
@@ -31,8 +33,8 @@ RUN 0 error: TESTFILE at 100000(100000): md5sum mismatch: wanteds=MD5SUM gots=MD
 run grep -v '^#' TEST.ko
 RUN 0 0x0 +@_0x0 0x100000 +@_0x100000 0x200000 ?@_0x300000 0x700000 + 
 run ddrescue -q TESTFILE TEST.img TEST.ko
-run cat TEST.ko
-RUN 0 # Rescue Logfile. Created by GNU ddrescue version 1.17@_# Command line: ddrescue -q TESTFILE TEST.img TEST.ko@_# current_pos@+ current_status@_0x002F0000 @+ @+ +@_#@+ @+ @+ pos@+ @+ @+ @+ size@+ status@_0x00000000@+ 0x00A00000@+ +
+run sed -e 's/ ddrescue version [^[:space:]]*$//' -e '/^# [^[:space:]]* time: /d' -e '/^# Finished/d' TEST.ko
+RUN 0 # Rescue Logfile. Created by GNU@_# Command line: ddrescue -q TESTFILE TEST.img TEST.ko@_# current_pos@+ current_status@_0x002F0000 @+ @+ +@_#@+ @+ @+ pos@+ @+ @+ @+ size@+ status@_0x00000000@+ 0x00A00000@+ +
 run ddrescue-verify -q TEST.img TEST.ko > TEST.verify2
 RUN 0
 run wc -l TEST.verify
