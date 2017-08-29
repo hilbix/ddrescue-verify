@@ -1,7 +1,7 @@
 # Makefile automatically generated, do not edit!
 # This output (only this Makefile) is Public Domain.
 #
-#@MD5TINOIGN@ Creation date: Sat Nov 28 21:16:39 CET 2015
+#@MD5TINOIGN@ Creation date: Tue Aug 29 10:32:13 DST 2017
 #
 # This file is based on following files:
 #@MD5TINOIGN@ 1: Makefile.tino
@@ -42,8 +42,8 @@ INSTALLPATH=/usr/local
       PROG1=ddrescue-verify
 
 # Override those in Makefile.tino if needed:
- STD_CFLAGS=-g -Wall -Wno-unused-function -O3 -Wno-error=unused-value
- STD_CCFLAGS=-g -Wall -Wno-unused-function -O3 -Wno-error=unused-value
+ STD_CFLAGS=-g -Wall -Wno-unused-function -O3 -Wno-error=unused-value -Wno-error=unused-function
+ STD_CCFLAGS=-g -Wall -Wno-unused-function -O3 -Wno-error=unused-value -Wno-error=unused-function
 STD_LDFLAGS=
  STD_LDLIBS=
     BINPATH=bin
@@ -88,9 +88,9 @@ VERSIONNAME=$(VERSIONFILE)
 
 # Targets considered to work for all systems with GNU MAKE and GNU AWK
 
-all:	$(SUBDIRS) $(PROGS)
+all::	$(SUBDIRS) $(PROGS)
 
-test:	all Tests
+test::	all Tests
 	$(PWD)/tino/Makefile-tests.sh Tests
 
 # To use this you need to do:
@@ -98,7 +98,7 @@ test:	all Tests
 #	make static
 # This is experimental.
 
-static:
+static::
 	[ -f diet.distignore~ ] || $(MAKE) clean
 	$(TOUCH) diet.distignore~
 	[ ! -d diet ] || $(MAKE) -C diet diet
@@ -127,7 +127,7 @@ $(VERSIONFILE).py:	VERSION
 # Poor man's install
 # Generated from PROGS and INSTALL* above
 
-install:
+install::
 	$(RM) "$(INSTALLPATH)/bin/$(PROG1)"
 	$(CP) "$(PROG1)" "$(INSTALLPATH)/bin/$(PROG1)"
 	$(STRIP) "$(INSTALLPATH)/bin/$(PROG1)"
@@ -135,15 +135,15 @@ install:
 # Special targets considered to work for all unix like systems
 # like CygWin
 
-it:	all
+it::	all
 	[ ".$(PWD)" != ".$(HERE)" ] || [ -f VERSION ] || \
 	{ UP="`dirname "$(HERE)"`"; $(MAKE) -C"$$UP" it HERE="$$UP"; }
 
-clean:
+clean::
 	$(RM) *.o *.d *~ .*~ */*~ $(CLEAN)
 	-$(MAKE) -C tino clean HERE="$(HERE)"
 
-distclean:	clean
+distclean::	clean
 	$(RM) "$(VERSIONFILE).h" $(PROGS) $(PROGS_EXE) $(DISTCLEAN)
 	$(RM) core core.* .#*
 	-$(MAKE) -C tino distclean HERE="$(HERE)"
@@ -151,13 +151,13 @@ distclean:	clean
 # Special targets in presence of tinolib
 # (subdirectory tino)
 
-dist:	distclean
+dist::	distclean
 	-$(MAKE) -C tino dist HERE="$(HERE)" DEBUGS="$(DBG_CFLAGS)$(DBG_LDFLAGS)$(DBG_LDLIBS)"
 
-tar:	distclean
+tar::	distclean
 	-$(MAKE) -C tino tar HERE="$(HERE)"
 
-diff:
+diff::
 	-$(MAKE) -C tino diff HERE="$(HERE)"
 
 # Automatically generated from $(SUBDIRS):
