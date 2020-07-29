@@ -179,7 +179,7 @@ ddrescue_verify(CONF)
   C->currentpos	= C->cont;
   C->currentlen	= 0;
   C->laststate	= 0;
-  while ((line=tino_buf_line_read(&buf, txt, 10))!=0)
+  while ((line=tino_buf_line_readE(&buf, txt, 10))!=0)
     {
       int	n;
       char	state;
