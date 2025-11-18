@@ -6,6 +6,10 @@
 
 #define TINO_NEED_OLD_ERR_FN
 
+#ifdef TINO_DIET_COMPILE
+#define	TINO_NO_POSIX_MEMALIGN
+#endif
+
 #include "tino/alarm.h"
 #include "tino/buf_line.h"
 #include "tino/getopt.h"
