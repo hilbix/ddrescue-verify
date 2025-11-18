@@ -7,7 +7,7 @@ RUN 0 1024+0 records in@_1024+0 records out
 run ddrescue -q TESTFILE TEST.img TEST.log
 RUN 0
 run sed -e 's/ ddrescue version [^[:space:]]*$//' -e '/^# [^[:space:]]* time: /d' -e '/^# Finished/d' TEST.log
-RUN 0 # Rescue Logfile. Created by GNU@_# Command line: ddrescue -q TESTFILE TEST.img TEST.log@_# current_pos@+ current_status@_0x009F0000 @+ @+ +@_#@+ @+ @+ pos@+ @+ @+ @+ size@+ status@_0x00000000@+ 0x00A00000@+ +
+RUN 0 # Mapfile. Created by GNU@_# Command line: ddrescue -q TESTFILE TEST.img TEST.log@_# current_pos@+ current_status@+ current_pass@_0x009F0000 @+ @+ + @+ @+ @+ @+ @+ @+ @+ 1@_#@+ @+ @+ pos@+ @+ @+ @+ size@+ status@_0x00000000@+ 0x00A00000@+ +
 run cmp -s TESTFILE TEST.img
 RUN 0
 run which ddrescue-verify
@@ -18,7 +18,7 @@ run wc -l TEST.verify
 RUN 0 13 TEST.verify
 run fgrep -v ' 0x100000 ' TEST.verify
 RUN 0 # img:@+ TEST.img@_# list: TEST.log@_0x0 +
-run ddrescue-verify -q TESTFILE TEST.verify > TEST.ok
+run ../ddrescue-verify -q TESTFILE TEST.verify > TEST.ok
 RUN 0
 run cat TEST.ok
 RUN 0 # img:@+ TESTFILE@_# list: TEST.verify@_0x0 +@_0x0 0xa00000 +
@@ -34,7 +34,7 @@ run grep -v '^#' TEST.ko
 RUN 0 0x0 +@_0x0 0x100000 +@_0x100000 0x200000 ?@_0x300000 0x700000 + 
 run ddrescue -q TESTFILE TEST.img TEST.ko
 run sed -e 's/ ddrescue version [^[:space:]]*$//' -e '/^# [^[:space:]]* time: /d' -e '/^# Finished/d' TEST.ko
-RUN 0 # Rescue Logfile. Created by GNU@_# Command line: ddrescue -q TESTFILE TEST.img TEST.ko@_# current_pos@+ current_status@_0x002F0000 @+ @+ +@_#@+ @+ @+ pos@+ @+ @+ @+ size@+ status@_0x00000000@+ 0x00A00000@+ +
+RUN 0 # Mapfile. Created by GNU@_# Command line: ddrescue -q TESTFILE TEST.img TEST.ko@_# current_pos@+ current_status@+ current_pass@_0x002F0000 @+ @+ + @+ @+ @+ @+ @+ @+ @+ 1@_#@+ @+ @+ pos@+ @+ @+ @+ size@+ status@_0x00000000@+ 0x00A00000@+ +
 run ddrescue-verify -q TEST.img TEST.ko > TEST.verify2
 RUN 0
 run wc -l TEST.verify
