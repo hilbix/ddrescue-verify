@@ -1,5 +1,5 @@
 *~
-ddrescue-verify_version.h
-ddrescue-verify.d
 ddrescue-verify
+ddrescue-verify.d
 ddrescue-verify.o
+ddrescue-verify.static
