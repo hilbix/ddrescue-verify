@@ -1,3 +1,5 @@
+[![ddrescue-verify Build Status](https://api.cirrus-ci.com/github/hilbix/ddrescue-verify.svg?branch=master)](https://cirrus-ci.com/github/hilbix/ddrescue-verify/master)
+
 *This is usable beta code*.  However, no promises and no guarantees!
 
 
