@@ -1,0 +1,17 @@
+make_task:
+  container:
+    image: gcc:latest
+
+  prep_script: git submodule update --init --recursive
+  compile_script: make
+  install_script: make install
+  preptest_script: apt install gddrescue
+  test_script: make test
+
+# I really have no idea how to run it on MacOS since my Mac-Mini died
+mac_task:
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-ventura-xcode:latest
+  prep_script: git submodule update --init --recursive
+  compile_script: make
+
