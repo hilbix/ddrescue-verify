@@ -1,7 +1,7 @@
 # Makefile automatically generated, do not edit!
 # This output (only this Makefile) is Public Domain.
 #
-#@MD5TINOIGN@ Creation date: Tue Dec 30 11:54:56 UTC 2025
+#@MD5TINOIGN@ Creation date: Sun Mar 29 07:41:06 CEST 2026
 #
 # This file is based on following files:
 #@MD5TINOIGN@ 1: Makefile.tino
@@ -85,29 +85,38 @@ VERSIONNAME=$(VERSIONFILE)
   PROGS_EXE=			\
 		$(PROG1).exe	\
 		$(PROG1).static.exe	\
+		$(PROG1).musl.exe	\
 
 # Semi-automatically generated for "make static"
 
   PROGS_STATIC=			\
 		$(PROG1).static	\
 
-.PHONY: all diet static install it clean distclean dist tar diff always
+# Semi-automatically generated for "make musl"
+
+  PROGS_MUSL=			\
+		$(PROG1).musl	\
+
+.PHONY: all diet musl static install it clean distclean dist tar diff always
 
 # Targets considered to work for all systems with GNU MAKE and GNU AWK
 
-all:	$(SUBDIRS) $(PROGS)
+all::	$(SUBDIRS) $(PROGS)
 
-static: $(SUBDIRS) $(PROGS_STATIC)
+static:: $(SUBDIRS) $(PROGS_STATIC)
 
-test:	all Tests
+test::	all Tests
 	$(PWD)/tino/Makefile-tests.sh Tests
+# This needs musl-tools installed
 
-# To use this you need to do:
-#	ln -s tinolib/diet .
-#	make diet
-# This is experimental.
+musl::	$(SUBDIRS) $(PROGS_MUSL)
 
-diet:
+# This needs dietlibc-dev to be installed.
+# However 'make static' or 'make musl' may be a better choice,
+# as this only works for sources which are prepared for this.
+# Hence there is the option to tweak things using a directory diet/
+
+diet::
 	[ -f diet.distignore~ ] || $(MAKE) clean
 	$(TOUCH) diet.distignore~
 	[ ! -d diet ] || $(MAKE) -C diet diet
@@ -136,7 +145,7 @@ $(VERSIONFILE).py:	VERSION
 # Poor man's install
 # Generated from PROGS and INSTALL* above
 
-install:
+install::
 	$(RM) "$(INSTALLPATH)/bin/$(PROG1)"
 	$(MKDIR) -pm755 "$(INSTALLPATH)/bin"
 	$(CP) "$(PROG1)" "$(INSTALLPATH)/bin/$(PROG1)"
@@ -154,7 +163,7 @@ clean:
 	-$(MAKE) -C tino clean HERE="$(HERE)"
 
 distclean:	clean
-	$(RM) "$(VERSIONFILE).h" $(PROGS) $(PROGS_EXE) $(DISTCLEAN)
+	$(RM) "$(VERSIONFILE).h" $(PROGS) $(PROGS_STATIC) $(PROGS_MUSL) $(PROGS_EXE) $(DISTCLEAN)
 	$(RM) core core.* .#*
 	-$(MAKE) -C tino distclean HERE="$(HERE)"
 
@@ -179,6 +188,9 @@ $(PROG1).static:	$(PROG1).o $(OBJS) $(LIBS)
 	$(CC) -static $< -o $(PROG1).static
 	$(STRIP) $(PROG1).static
 
+$(PROG1).musl:	$(PROG1).o $(OBJS) $(LIBS)
+	musl-gcc -static $< -o $(PROG1).musl
+	$(STRIP) $(PROG1).musl
 
 # compiler generated dependencies, remove if incorrect
 
