@@ -5,7 +5,7 @@ make_task:
   prep_script: git submodule update --init --recursive
   compile_script: make
   install_script: make install
-  preptest_script: apt install gddrescue
+  preptest_script: apt update && apt install gddrescue
   test_script: make test
 
 # I really have no idea how to run it on MacOS since my Mac-Mini died
